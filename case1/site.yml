@@ -1,0 +1,219 @@
+---
+- name: Set hostnames and local settings
+  hosts: all
+  become: true
+  tasks:
+    - name: Set hostname
+      hostname:
+        name: "{{ inventory_hostname }}"
+    - name: Configuring /etc/hosts
+      lineinfile:
+        path: "/etc/hosts"
+        line: "{{ hostvars[item]['ansible_host'] }} {{ hostvars[item]['ansible_hostname'] }}.{{ hostvars[item]['ansible_domain'] }}"
+        state: present
+      loop: "{{ ansible_play_hosts }}"
+
+########## PACKAGES ################
+- name: Install packages-> Apache
+  hosts: app
+  become: true
+  tasks:
+    - apt:
+        name: "{{ item }}"
+        state: present
+      loop:
+        - apache2
+        - nfs-common
+      when: ansible_distribution == "Ubuntu"
+    - yum:
+        name: "{{ item }}"
+        state: present
+      loop:
+        - httpd
+        - nfs-utils
+      when: ansible_distribution == "CentOS"
+
+- name: Install packages-> Mariadb
+  hosts: db
+  become: true
+  tasks:
+    - yum:
+        name: "{{ item }}"
+        state: present
+      loop:
+        - mariadb-server
+        - nfs-utils
+
+- name: Install packages-> NFS-Server
+  hosts: nfs
+  become: true
+  tasks: 
+    - yum:
+        name: nfs-utils
+        state: present
+
+########### FIREWALL ###############
+- name: Start firewall service
+  hosts: all
+  become: true
+  tasks:
+    - service:
+        name: firewalld
+        state: started
+        enabled: yes
+      when: ansible_distribution == "CentOS"
+
+- name: Configuring firewall-> Apache
+  hosts: app
+  become: true
+  tasks:
+    - firewalld:
+        service: http
+        permanent: yes
+        immediate: yes
+        state: enabled
+      when: ansible_distribution == "CentOS"
+
+- name: Configuring firewall-> Mariadb
+  hosts: db
+  become: true
+  tasks:
+    - firewalld:
+        service: mysql
+        permanent: yes
+        immediate: yes
+        state: enabled
+
+- name: Configuring firewall-> NFS-Server
+  hosts: nfs
+  become: true
+  tasks:
+    - firewalld:
+        service: "{{ item }}"
+        permanent: yes
+        immediate: yes
+        state: enabled
+      loop:
+        - nfs
+        - rpc-bind
+        - mountd
+
+########## NFS-SERVER ###############
+- name: Setup devices, partitions and filesystems
+  hosts: nfs
+  become: true
+  vars:
+    - nfs_device: /dev/sdb
+      nfs_device_partition: /dev/sdb1
+      volume_group_name: myvol
+  tasks: 
+    - name: Create the mount point myvol-data directory
+      file:
+        path: "{{ item }}"
+        state: directory
+      loop:
+        - /data
+        - /webfiles
+    - name: Create partition
+      parted:
+        device: "{{ nfs_device }}"
+        number: 1
+        part_type: primary
+        state: present
+    - name: Create the VolumeGroup
+      lvg:
+        vg: "{{ volume_group_name }}"
+        pvs: "{{ nfs_device_partition }}"
+    - name: Create logical volume myvol-data
+      lvol:
+        lv: data
+        size: 500
+        state: present
+        vg: "{{ volume_group_name }}"
+    - name: Create myvol-data filesystem
+      filesystem:
+        dev: /dev/mapper/{{ volume_group_name}}-data
+        fstype: ext4
+    - name: Mount myvol-data filesystem
+      mount:
+        path: /data
+        src: /dev/mapper/{{ volume_group_name }}-data
+        fstype: ext4
+        state: mounted 
+    - name: Create logical volume webfiles
+      lvol:
+        lv: webfiles
+        size: 1.2G
+        state: present
+        vg: "{{ volume_group_name }}"     
+    - name: Create myvol-webfiles filesystem
+      filesystem:
+        dev: /dev/mapper/{{ volume_group_name }}-webfiles
+        fstype: xfs
+    - name: Mount myvol-webfiles filesystem
+      mount:
+        path: /webfiles
+        src: /dev/mapper/{{ volume_group_name }}-webfiles
+        fstype: xfs
+        state: mounted
+
+- name: Configuring NFS service
+  hosts: nfs
+  become: true
+  tasks:
+    - name: Configuring /data export
+      lineinfile:
+        path: /etc/exports
+        line: "/data db1.example.com(rw,sync,all_squash)"
+    - name: Configuring /webfiles export
+      lineinfile:
+        path: /etc/exports
+        line: "/webfiles app3.example.com(rw,sync,all_squash)"
+      notify:
+        - Restart NFS-Server
+    - name: Ensure NFS-Server is running
+      service:
+        name: nfs-server
+        enabled: yes
+        state: started
+  handlers:
+    - name: Restart NFS-Server
+      service:
+        name: nfs-server
+        state: restarted
+    
+############# APACHE ################
+- name: Configuring Apache service
+  hosts: app
+  become: true
+  tasks:
+    - name: Create mount point
+      file:
+        path: /webfiles
+        state: directory
+    - name: Mount filesystem from NFS-Server
+      mount:
+        src: nfs1.example.com:/webfiles
+        path: /webfiles
+        state: mounted
+        fstype: nfs 
+
+
+############# MARIADB ################
+- name: Configuring Mariadb service
+  hosts: db
+  become: true
+  tasks:
+    - name: Create mount point
+      file:
+        path: /data
+        owner: mysql
+        group: mysql
+        state: directory
+
+    - name: Mount filesystem from NFS-Server
+      mount:
+        src: nfs1.example.com:/data
+        path: /data
+        state: mounted
+        fstype: nfs

@@ -1,0 +1,9 @@
+---
+- hosts: all
+  become: true
+  tasks:
+    - name: Test
+      debug:
+        msg: "{{ hostvars[item]['ansible_host'] }} {{ hostvars[item]['ansible_hostname'] }}.{{ hostvars[item]['ansible_domain'] }}"
+      loop: "{{ ansible_play_hosts }}"
+      
