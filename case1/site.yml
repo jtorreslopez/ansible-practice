@@ -164,11 +164,11 @@
     - name: Configuring /data export
       lineinfile:
         path: /etc/exports
-        line: "/data db1.example.com(rw,sync,all_squash)"
+        line: "/data db1.example.com(rw,sync,no_root_squash)"
     - name: Configuring /webfiles export
       lineinfile:
         path: /etc/exports
-        line: "/webfiles app3.example.com(rw,sync,all_squash)"
+        line: "/webfiles app3.example.com(rw,sync,no_root_squash)"
       notify:
         - Restart NFS-Server
     - name: Ensure NFS-Server is running
@@ -197,7 +197,35 @@
         path: /webfiles
         state: mounted
         fstype: nfs 
-
+    - name: Configure Apache Directory
+      lineinfile:
+        path: /etc/apache2/apache2.conf
+        line: "<Directory /webfiles/>"
+        regexp: "^<Directory /var/www"
+        state: present      
+      notify: Restart Apache
+    - name: Configure Apache DocumentRoot
+      lineinfile:
+        path: /etc/apache2/sites-available/000-default.conf
+        line: "DocumentRoot /webfiles"
+        regexp: "DocumentRoot"
+        state: present
+      notify: Restart Apache
+    - name: Copy index.html
+      copy:
+        src: index.html.template
+        dest: /webfiles/index.html
+        mode: 0644
+    - name: Ensure the Apache is running
+      service:
+        name: apache2
+        state: started
+        enabled: yes
+  handlers:
+    - name: Restart Apache
+      service:
+        name: apache2
+        state: restarted
 
 ############# MARIADB ################
 - name: Configuring Mariadb service
@@ -217,3 +245,23 @@
         path: /data
         state: mounted
         fstype: nfs
+
+    - name: Configure Mariadb server data dir
+      lineinfile:
+        path: /etc/my.cnf
+        line: "datadir=/data"
+        regexp: "^datadir"
+        state: present
+      notify: Restart Mariadb
+
+    - name: Ensure Mariadb is running
+      service:
+        name: mariadb
+        state: started
+        enabled: yes
+
+  handlers:
+    - name: Restart Mariadb
+      service:
+        name: mariadb
+        state: restarted
