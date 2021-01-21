@@ -1,0 +1,82 @@
+---
+- name: Set hostnames and /etc/hosts
+  hosts: docker 
+  become: true
+  tasks: 
+    - name: Set hostname
+      hostname:
+        name: "{{ inventory_hostname }}"
+
+    - name: Configuring /etc/hosts
+      lineinfile:
+        path: "/etc/hosts"
+        line: "{{ hostvars[item]['ansible_host'] }} {{ hostvars[item]['ansible_hostname'] }}.{{ hostvars[item]['ansible_domain'] }}"
+        state: present
+      loop: "{{ ansible_play_hosts }}"
+
+- name: Install Docker Engine
+  hosts: docker
+  become: true
+  tasks:
+    - name: Install on CentOS systems
+      block:      
+        - name: Install yum-utils
+          yum:
+            name: yum-utils
+            state: present
+        - name: Add Yum Docker Repository
+          shell: yum-config-manager --add-repo=https://download.docker.com/linux/centos/docker-ce.repo
+          args:
+            creates: /etc/yum.repos.d/docker-ce.repo
+        - name: Install Docker SDK for Python on CentOS
+          yum:
+            name: python-docker-py
+            state: present
+      when: ansible_distribution == "CentOS"
+      
+    - name: Install on Ubuntu systems
+      block:
+        - name: Install dependencies
+          apt:
+            name: "{{ item }}"
+            state: present
+          loop:
+            - apt-transport-https
+            - ca-certificates
+            - curl
+            - gnupg-agent
+            - software-properties-common
+        - name: Add Apt key
+          apt_key:
+            url: https://download.docker.com/linux/ubuntu/gpg
+            state: present
+        - name: Add the Apt Docker Repository
+          apt_repository:
+            repo: deb [arch=amd64] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable
+            state: present 
+        - name: Install Docker SDK for Python on Ubuntu
+          apt:
+            name: python3-docker
+            state: present
+      when: ansible_distribution == "Ubuntu"
+
+
+    - name: Install docker Engine
+      package:
+        name: "{{ item }}"
+        state: present
+      loop: 
+        - docker-ce
+        - docker-ce-cli
+
+    - name: Add user ansible to group docker
+      user:
+        name: ansible
+        groups: docker
+        append: yes
+
+    - name: Start and enabled the Docker service
+      service:
+        name: docker
+        enabled: yes
+        state: started

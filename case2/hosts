@@ -1,0 +1,3 @@
+[docker]
+docker1.example.com ansible_host=192.168.0.18 ansible_ssh_private_key_file=/home/ansible/.ssh/docker-node1
+docker2.example.com ansible_host=192.168.0.19 ansible_ssh_private_key_file=/home/ansible/.ssh/docker-node2

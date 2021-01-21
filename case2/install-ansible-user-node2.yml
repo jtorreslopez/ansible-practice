@@ -1,0 +1,16 @@
+---
+- hosts: docker2.example.com
+  remote_user: jesus
+  become: true
+  tasks:
+    - name: Create ansible user
+      user:
+        name: ansible
+    - name: Install the ssh-key
+      authorized_key:
+        key: "{{ lookup('file', '/home/ansible/.ssh/docker-node2.pub') }}"
+        user: ansible
+    - name: Configure sudo privileges
+      copy:
+        src: ansible
+        dest: /etc/sudoers.d/ansible
