@@ -1,0 +1,79 @@
+- name: Setup Wordpress
+  hosts: app
+  become: true
+  tasks:
+  - name: Install Remi Repo
+    yum_repository:
+      name: remi-php74
+      description: Remi's PHP 7.4 RPM repository for Enterprise Linux 7 - $basearch
+      mirrorlist: http://cdn.remirepo.net/enterprise/7/php74/mirror
+      enabled: yes
+      gpgcheck: 1
+      gpgkey: http://rpms.remirepo.net/RPM-GPG-KEY-remi
+  - name: Install Remi Safe Repo
+    yum_repository:
+      name: remi-safe
+      description: Safe Remi's RPM repository for Enterprise Linux 7 - $basearch
+      mirrorlist: http://cdn.remirepo.net/enterprise/7/safe/mirror
+      enabled: yes
+      gpgcheck: 1
+  - name: Install LAMP
+    yum:
+      name: "{{ item }}"
+      state: present
+    loop:
+      - httpd
+      - php
+      - php-mysql
+      - php-gd
+      - mariadb
+      - mariadb-server
+      - mariadb-libs
+      - python2-PyMySQL
+  - name: Unarchive wordpress
+    unarchive:
+      src: /home/ansible/wordpress/files/wordpress.tar.gz
+      dest: /var/www/html/
+      owner: root
+      group: root
+  - name: Create wp-config.php
+    copy:
+      src: /var/www/html/wp-config-sample.php
+      dest: /var/www/html/wp-config.php
+      remote_src: yes
+      owner: root
+      group: root
+  - name: Customize wp-config.php
+    lineinfile:
+      path: /var/www/html/wp-config.php
+      regexp: "{{ item.from }}"
+      line: "{{ item.to }}"
+      state: present
+    loop:
+      - { from: 'database_name_here', to: "define( 'DB_NAME', 'wordpress');"}
+      - { from: 'username_here', to: "define( 'DB_USER', 'wordpress' );"}
+      - { from: 'password_here', to: "define( 'DB_PASSWORD', 'wordpress' );"}
+  - name: Configure PHP.ini
+    lineinfile:
+      path: /etc/php.ini
+      line: "short_open_tag = On"
+      state: present
+  - name: Restart Apache
+    service:
+      name: httpd
+      state: started
+  - name: Start Mariadb
+    service:
+      name: mariadb
+      state: started
+  - name: Create the database
+    mysql_db:
+      name: wordpress
+      state: present 
+      login_user: root
+  - name: Setup database user
+    mysql_user:
+      name: wordpress
+      password: wordpress
+      priv: 'wordpress.*:ALL'
+      state: present
