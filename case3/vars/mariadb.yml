@@ -1,0 +1,2 @@
+el_socket: /var/lib/mysql/mysql.sock 
+debian_socket: /var/run/mysqld/mysqld.sock 

@@ -1,0 +1,16 @@
+el_packages:
+  - httpd
+  - php
+  - php-mysql
+  - php-gd
+  - mariadb
+  - mariadb-server
+  - mariadb-libs
+  - python2-PyMySQL
+debian_packages:
+  - apache2
+  - php
+  - php-mysql
+  - php-gd
+  - mariadb-server
+  - python-pymysql
