@@ -1,0 +1,37 @@
+---
+- name: Install Apache on backends
+  hosts: backends
+  become: true
+  tasks:
+    - name: Install packages
+      yum:
+        name: httpd
+        state: present
+    - name: Start and enable Apache
+      service:
+        name: httpd
+        state: started
+        enabled: yes
+    - name: Configure sites
+      template:
+        src: ./templates/index.j2
+        dest: /var/www/html/index.html
+
+
+- name: Install NGINX load balancer
+  hosts: lb
+  become: true
+  tasks:
+    - name: Install packages
+      yum:
+        name: nginx
+        state: present
+    - name: Copy conf file
+      template:
+        src: ./templates/nginx.j2
+        dest: /etc/nginx/nginx.conf
+    - name: Restart nginx
+      service:
+        name: nginx
+        state: restarted
+        enabled: yes

@@ -1,0 +1,7 @@
+[lb]
+loadbalancer ansible_host=104.197.60.202
+
+[backends]
+b1 ansible_host=34.66.39.52
+b2 ansible_host=104.197.84.243
+b3 ansible_host=35.193.233.223
