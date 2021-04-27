@@ -1,0 +1,39 @@
+---
+- hosts: gitlab
+  become: true
+  tasks:
+    - name: Configure hostname
+      hostname:
+        name: "{{ inventory_hostname }}"
+    - name: Configure /etc/hosts
+      lineinfile:
+        path: /etc/hosts
+        line: "{{ ansible_default_ipv4['address'] }} {{ inventory_hostname }}"
+        state: present
+    - name: Install requirements
+      yum:
+        name: "{{ item }}"
+        state: present
+      loop:
+        - curl
+        - policycoreutils-python
+        - perl
+        - postfix
+    - name: Start and enable Postfix
+      service:
+        name: postfix
+        state: started
+        enabled: yes
+    - name: Copy the repository
+      copy:
+        src: files/gitlab_gitlab-ee.repo
+        dest: /etc/yum.repos.d/gitlab_gitlab-ee.repo
+        owner: root
+        group: root
+        mode: 0644
+    - name: Install gitlab
+      yum:
+        name: gitlab-ee
+        state: present
+      environment:  
+        EXTERNAL_URL: "http://gitlab.jesus.com"

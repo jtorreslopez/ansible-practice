@@ -5,6 +5,7 @@
     - vars/software.yml
     - vars/services.yml
     - vars/mariadb.yml
+    - vars/passwd.yml
   tasks:
   - block:
     - name: Install Remi Repo
@@ -13,16 +14,21 @@
         description: Remi's PHP 7.4 RPM repository for Enterprise Linux 7 - $basearch
         mirrorlist: http://cdn.remirepo.net/enterprise/7/php74/mirror
         enabled: yes
-        gpgcheck: 1
-        gpgkey: http://rpms.remirepo.net/RPM-GPG-KEY-remi
-  
+        gpgcheck: 0
     - name: Install Remi Safe Repo
       yum_repository:
         name: remi-safe
         description: Safe Remi's RPM repository for Enterprise Linux 7 - $basearch
         mirrorlist: http://cdn.remirepo.net/enterprise/7/safe/mirror
         enabled: yes
-        gpgcheck: 1
+        gpgcheck: 0
+    - name: Install EPEL
+      yum_repository:
+        name: epel
+        description: Extra Packages for Enterprise Linux 7 - $basearch
+        baseurl: http://download.fedoraproject.org/pub/epel/7/$basearch
+        enabled: yes
+        gpgcheck: 0
     when:
       - ansible_distribution == 'CentOS'
 
@@ -46,7 +52,7 @@
 
   - name: Unarchive wordpress
     unarchive:
-      src: /home/ansible/wordpress/files/wordpress.tar.gz
+      src: ./files/wordpress.tar.gz
       dest: /var/www/html/
       owner: root
       group: root
@@ -105,14 +111,14 @@
   - block:
     - name: Create the database
       mysql_db:
-        name: wordpress
+        name: "{{ wp_db_name }}"
         state: present 
         login_unix_socket: "{{ el_socket }}"
         login_user: root
     - name: Setup database user
       mysql_user:
-        name: wordpress
-        password: wordpress
+        name: "{{ wp_db_user }}"
+        password: "{{ wp_db_pass }}"
         login_unix_socket: "{{ el_socket}}"
         priv: 'wordpress.*:ALL'
         state: present
@@ -122,18 +128,30 @@
   - block:
     - name: Create the database
       mysql_db:
-        name: wordpress
+        name: "{{ wp_db_name }}"
         state: present
         login_unix_socket: "{{ debian_socket }}"
         login_user: root
     - name: Setup database user
       mysql_user:
-        name: wordpress
-        password: wordpress
+        name: "{{ wp_db_user }}"
+        password: "{{ wp_db_pass }}"
         login_unix_socket: "{{ debian_socket }}"
         priv: 'wordpress.*:ALL'
         state: present
     when:
       - ansible_distribution == 'Debian'
 
+  - name: Check if firewalld is active
+    command: systemctl is-active firewalld
+    register: firewalld_status
+    ignore_errors: true
 
+  - name: Open firewall ports if needed
+    firewalld:
+      service: http
+      permanent: yes
+      state: enabled
+      immediate: yes
+    when:
+      - firewalld_status['stdout'] == "active"

@@ -1,0 +1,5 @@
+pre_packages:
+  - wget
+jenkins_packages:
+  - jenkins
+  - java-1.8.0-openjdk-devel

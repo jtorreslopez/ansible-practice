@@ -1,3 +1,2 @@
 [app]
-wordpress1 ansible_host=34.67.170.237
-wordpress2 ansible_host=34.122.222.9
+wordpress1 ansible_host=192.168.0.18

@@ -1,0 +1,42 @@
+---
+- hosts: jenkins
+  become: true
+  vars_files:
+    - vars/software.yml
+    - vars/repos.yml
+  tasks:
+    - name: Install pre-packages
+      yum:
+        name: "{{ item }}"
+        state: present
+      loop: "{{ pre_packages }}"
+    - name: Install Jenkins repo
+      get_url:
+        url: "{{ repo_link }}"
+        dest: "{{ repo_file }}"
+    - name: Import rpm key
+      rpm_key:
+        key: "{{ repo_key }}"
+        state: present
+    - name: Install Jenkins
+      yum:
+        name: "{{ item }}"
+        state: present
+      loop: "{{ jenkins_packages }}"
+    - name: Start and enable Jenkins
+      service:
+        name: jenkins
+        state: started
+        enabled: yes
+    - name: Check if firewalld is active
+      command: systemctl is-active firewalld
+      register: firewalld_status
+      ignore_errors: true
+    - name: Configure firewalld
+      firewalld:
+        port: 8080/tcp
+        state: enabled
+        permanent: yes
+        immediate: yes
+      when:
+        - firewalld_status['stdout'] == "active"
