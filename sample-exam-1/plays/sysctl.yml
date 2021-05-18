@@ -1,0 +1,19 @@
+---
+- hosts: all
+  become: true
+  vars:
+    - mem_trigger: 2048
+  tasks:
+    - name: Check memory available
+      debug:
+        msg: "Server memory less than {{ mem_trigger }}" 
+      when:
+        - ansible_facts['memtotal_mb'] < mem_trigger
+    - name: Configure swappiness
+      sysctl:
+        name: vm.swappiness
+        value: '10'
+        state: present
+        reload: yes
+      when:
+        - ansible_facts['memtotal_mb'] > mem_trigger

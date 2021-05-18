@@ -1,0 +1,32 @@
+---
+- name: Install packages
+  yum:
+    name: "{{ item }}"
+    state: present
+  loop: "{{ packages }}"
+
+- name: Start and enable firewalld
+  service:
+    name: firewalld
+    state: started
+    enabled: yes
+
+- name: Start and enable Apache
+  service:
+    name: httpd
+    state: started
+    enabled: yes
+
+- name: Configure firewalld
+  firewalld:
+    service: "{{ item }}"
+    state: enabled
+    permanent: yes
+    immediate: yes
+  loop: "{{ firewall_services }}"
+
+- name: Configure index
+  template:
+    src: index.html.j2
+    dest: /var/www/html/index.html
+  notify: Restart Apache

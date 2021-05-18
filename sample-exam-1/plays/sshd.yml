@@ -1,0 +1,22 @@
+---
+- hosts: all
+  become: true
+  vars:
+    - sshd_file: /etc/ssh/sshd_config
+  tasks:
+    - name: Configure Banner
+      lineinfile:
+        path: "{{ sshd_file }}"
+        regexp: "^Banner"
+        line: "Banner /etc/motd"
+    - name: Configure X11Forwarding
+      lineinfile:
+        path: "{{ sshd_file }}"
+        regexp: "^X11Forwarding"
+        line: "X11Forwarding no"
+    - name: Configure MaxAuthTries
+      lineinfile:
+        path: "{{ sshd_file }}"
+        regexp: "^MaxAuthTries"
+        line: "MaxAuthTries 3"
+

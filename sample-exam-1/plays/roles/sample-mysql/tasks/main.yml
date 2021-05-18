@@ -1,0 +1,66 @@
+---
+- name: Create partition
+  parted:
+    device: /dev/sdb
+    number: 1
+    part_end: 800MiB
+    state: present
+
+- name: Create vg_database volume group
+  lvg:
+    vg: "{{ vg_name }}"
+    pvs: /dev/sdb1 
+  
+- name: Create lv_mysql logical volume
+  lvol:
+    vg: "{{ vg_name }}"
+    lv: "{{ lv_name }}"
+    size: 512m
+
+- name: Create the XFS filesystem
+  filesystem:
+    fstype: xfs
+    dev: "/dev/{{ vg_name }}/{{ lv_name }}"
+
+- name: Mount the lv
+  mount:
+    path: "{{ mount_point }}"
+    src: "/dev/{{ vg_name }}/{{ lv_name }}"
+    fstype: xfs
+    state: mounted
+
+- name: Install MySQL
+  yum:
+    name: "{{ mysql_package }}"
+    state: present
+
+- name: Start firewalld
+  service:
+    name: firewalld
+    state: started
+    enabled: yes
+
+- name: Configure firewalld
+  firewalld:
+    service: mysql
+    permanent: yes
+    state: enabled
+    immediate: yes
+
+- name: Create MySQL configuration file
+  template:
+    src: my.cnf.j2
+    dest: /etc/my.cnf
+
+- name: Start and enable MySQL
+  service:
+    name: mysqld
+    state: started
+    enabled: yes
+
+    
+
+
+
+
+

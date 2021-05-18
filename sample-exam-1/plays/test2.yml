@@ -1,0 +1,8 @@
+---
+- hosts: database
+  become: true
+  tasks:
+    - name: Print hostvars
+      debug:
+        msg: "{{ item }}"
+      loop: "{{ hostvars }}"

@@ -1,0 +1,11 @@
+---
+- hosts: proxy
+  become: yes
+  tasks:
+    - name: Append date to time.log
+      cron:
+        name: Append
+        minute: "0"
+        hour: "*"
+        user: root
+        job: "date >> /var/log/time.log"

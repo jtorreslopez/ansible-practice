@@ -1,0 +1,19 @@
+---
+- hosts: webservers
+  tasks:
+    - setup:
+
+- hosts: proxy
+  become: yes
+  vars:
+    - haproxy_backend_servers: []
+  tasks:
+    - name: Print webservers info
+      set_fact:
+        haproxy_backend_servers: "{{ haproxy_backend_servers + [ hostvars[item]['ansible_facts']['hostname'] , hostvars[item]['ansible_facts']['default_ipv4']['address'] ] }}"
+      loop: "{{ groups['webservers'] }}"
+    - name: Print haproxy var
+      debug:
+        var: haproxy_backend_servers
+
+      

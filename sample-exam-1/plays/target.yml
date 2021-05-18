@@ -1,0 +1,6 @@
+---
+- hosts: webservers
+  become: true
+  tasks:
+    - name: Set default target
+      shell: systemctl set-default multi-user.target

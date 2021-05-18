@@ -1,0 +1,16 @@
+---
+- hosts: database
+  become: true
+  vars:
+    - source_file: /mnt/mysql_backups/database_list.txt
+  tasks:
+    - name: Create database_list file
+      copy:
+        dest: "{{ source_file }}"
+        content: "dev,test,qa,prod"
+    - name: Create the archive
+      archive:
+        path: "{{ source_file }}"
+        dest: /mnt/mysql_backups/archive.gz
+        format: gz
+

@@ -1,0 +1,5 @@
+---
+vg_name: vg_database
+lv_name: lv_mysql
+mount_point: /mnt/mysql_backups
+mysql_package: mysql-server

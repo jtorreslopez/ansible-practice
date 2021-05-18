@@ -1,0 +1,4 @@
+ansible all -k -u root -m user -a "name=automation state=present"
+ansible all -k -u root -m authorized_key -a "user=automation state=present key='{{ lookup('file', '/home/automation/.ssh/id_rsa.pub') }}'"
+ansible all -k -u root -m file -a "path=/etc/sudoers.d/automation state=touch"
+ansible all -k -u root -m lineinfile -a 'path=/etc/sudoers.d/automation line="automation ALL=(ALL) NOPASSWD: ALL"'

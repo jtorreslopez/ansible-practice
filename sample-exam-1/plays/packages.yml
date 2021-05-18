@@ -1,0 +1,22 @@
+---
+- hosts: proxy
+  become: true
+  tasks:
+    - name: Install proxy packages
+      yum:
+        name: "{{ item }}"
+        state: present
+      loop:
+        - tcpdump
+        - mailx
+
+- hosts: database
+  become: true
+  tasks:
+    - name: Install database packages
+      yum:
+        name: "{{ item }}"
+        state: present
+      loop:
+        - lsof
+        - mailx

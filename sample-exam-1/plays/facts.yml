@@ -1,0 +1,17 @@
+---
+- hosts: database
+  become: true
+  gather_facts: no
+  tasks:
+    - name: Ensure facts dir exists
+      file:
+        path: /etc/ansible/facts.d
+        state: directory
+        recurse: yes
+    - name: Install the custom fact
+      copy:
+        dest: /etc/ansible/facts.d/sample_exam.fact
+        content: |
+          [sample_exam]
+          server_role = mysql
+        mode: 0644
