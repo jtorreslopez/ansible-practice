@@ -1,1 +1,2 @@
 It is a NFS server exporting a filesystem to servers (Apache servers and MariaDB server), configuring firewall and services on all of them.
+The exported filesystems are being used for the Apache servers to storage html files and for the MariaDB server to storage data.
