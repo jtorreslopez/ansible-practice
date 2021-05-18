@@ -1,0 +1,1 @@
+It is a NFS server exporting a filesystem to servers (Apache servers and MariaDB server), configuring firewall and services on all of them.
