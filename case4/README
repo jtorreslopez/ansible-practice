@@ -1,1 +1,1 @@
-Setup a NGINX load balancer who redirect traffic among Apache web servers backends. The adition of an instance of Apache server could be configured automatically by rerunning the playbook.
+Setup a NGINX load balancer who redirects traffic among Apache web servers backends. The adition of an instance of an Apache server should be configured automatically by rerunning the playbook.
