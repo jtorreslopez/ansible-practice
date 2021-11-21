@@ -1,0 +1,10 @@
+---
+- name: Realizar el backup de los archivos de regla
+  hosts: all
+  become: True
+  tasks:
+    - name: Descargar archivo de reglas
+      fetch:
+        src: /etc/audit/rules.d/requerimiento10.rules
+        dest: ./backup_dir
+

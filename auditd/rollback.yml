@@ -1,0 +1,13 @@
+---
+- name: Reversa de configuracion
+  hosts: all
+  become: True
+  tasks:
+    - name: Copiar archivo de backup
+      copy:
+        src: "./backup_dir/{{ ansible_hostname }}/etc/audit/rules.d/requerimiento10.rules"
+        dest: /etc/audit/rules.d/
+      notify: Reiniciar auditd
+  handlers:
+    - name: Reiniciar auditd
+      command: service auditd restart

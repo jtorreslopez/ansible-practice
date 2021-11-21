@@ -1,0 +1,45 @@
+---
+- name: Configurar reglas y envio de logs del servicio Auditd
+  hosts: all
+  become: True
+  vars:
+    - audispd_remote_config:
+        - parametro: remote_server
+          valor: 127.0.0.1
+        - parametro: port
+          valor: 514
+        - parametro: transport
+          valor: udp
+    - audispd_syslog_config:
+        - parametro: active
+          valor: "yes"
+  tasks:
+    - name: Obtener version de audit
+      shell: rpm -q --queryformat '%{VERSION}-%{RELEASE}.%{ARCH}\n' audit
+      register: audit_version
+    - name: Instalar plugin de auditd
+      yum:
+        name: audispd-plugins-{{ audit_version['stdout'] }}
+        state: present
+    - name: Configurar audisp-remote.conf
+      lineinfile:
+        path: /etc/audisp/audisp-remote.conf
+        regexp: "^{{ item['parametro'] }}"
+        line: "{{ item['parametro'] }} = {{ item['valor'] }}"
+      loop: "{{ audispd_remote_config }}"
+      notify: Reiniciar auditd
+    - name: Configurar pluginsd syslog.conf
+      lineinfile:
+        path: /etc/audisp/plugins.d/syslog.conf
+        regexp: "^{{ item['parametro'] }}"
+        line: "{{ item['parametro'] }} = {{ item['valor'] }}"
+      loop: "{{ audispd_syslog_config }}"
+      notify: Reiniciar auditd
+    - name: Copiar archivo de reglas
+      copy:
+        src: ./requerimiento10.rules
+        dest: /etc/audit/rules.d/
+      notify: Reiniciar auditd
+  handlers:
+    - name: Reiniciar auditd
+      command: service auditd restart

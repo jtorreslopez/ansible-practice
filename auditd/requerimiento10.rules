@@ -1,0 +1,58 @@
+-a always,exit -F path=/etc/fstab -F perm=r -F key=Monitoreo-Req10-pci
+-a always,exit -F path=/etc/passwd -F perm=r -F key=Monitoreo-Req10-pci
+-a always,exit -F path=/etc/group -F perm=r -F key=Monitoreo-Req10-pci
+-a always,exit -F path=/etc/shadow -F perm=wr -F key=Monitoreo-Req10-pci
+-a always,exit -F path=/etc/ssh/sshd_config -F perm=wr -F key=Monitoreo-Req10-pci
+-a always,exit -F path=/etc/rsyslog.conf -F perm=r -F key=Monitoreo-Req10-pci
+-a always,exit -F path=/etc/login.defs -F perm=wr -F key=Monitoreo-Req10-pci
+-a always,exit -F path=/etc/pam.d/system-auth -F perm=wr -F key=Monitoreo-Req10-pci
+-a always,exit -F path=/etc/hosts.allow -F perm=r -F key=Monitoreo-Req10-pci
+-a always,exit -F path=/etc/hosts.deny -F perm=r -F key=Monitoreo-Req10-pci
+-a always,exit -F path=/etc/sudoers -F perm=wr -F key=Monitoreo-Req10-pci
+-a always,exit -F dir=/etc/sudoers.d/ -F perm=wr -F key=Monitoreo-Req10-pci
+-a always,exit -F path=/etc/hosts -F perm=r -F key=Monitoreo-Req10-pci
+-a always,exit -F path=/etc/hostname -F perm=r -F key=Monitoreo-Req10-pci
+-a always,exit -F path=/etc/bashrc -F perm=r -F key=Monitoreo-Req10-pci
+-a always,exit -F path=/etc/crontab -F perm=r -F key=Monitoreo-Req10-pci
+-a always,exit -F path=/etc/sysctl.conf -F perm=r -F key=Monitoreo-Req10-pci
+-a always,exit -F path=/etc/selinux/config -F perm=r -F key=Monitoreo-Req10-pci
+-a always,exit -F path=/etc/resolv.conf -F perm=r -F key=Monitoreo-Req10-pci
+-a always,exit -F path=/etc/grub2.cfg -F perm=r -F key=Monitoreo-Req10-pci
+-a always,exit -F path=/etc/grub.cfg -F perm=r -F key=Monitoreo-Req10-pci
+-a always,exit -F path=/etc/default/grub -F perm=r -F key=Monitoreo-Req10-pci
+-a always,exit -F path=/etc/gshadow -F perm=wr -F key=Monitoreo-Req10-pci
+
+-a always,exit -F dir=/var/log/audit -F perm=war -F key=10.2.3-access-audit-trail
+-a always,exit -F path=/usr/sbin/ausearch -F perm=x -F key=10.2.3-access-audit-trail
+-a always,exit -F path=/usr/sbin/aureport -F perm=x -F key=10.2.3-access-audit-trail
+-a always,exit -F path=/usr/sbin/aulast -F perm=x -F key=10.2.3-access-audit-trail
+-a always,exit -F path=/usr/sbin/aulastlogin -F perm=x -F key=10.2.3-access-audit-trail
+-a always,exit -F path=/usr/sbin/auvirt -F perm=x -F key=10.2.3-access-audit-trail
+
+-a always,exit -F arch=b32 -S all -F exit=-13 -k access-denied
+-a always,exit -F arch=b64 -S all -F exit=-13 -k access-denied
+
+-a always,exit -F arch=b64 -S setuid -F a0=0 -F exe=/usr/bin/su -F key=10.2.5.b-elevated-privs-session
+-a always,exit -F arch=b32 -S setuid -F a0=0 -F exe=/usr/bin/su -F key=10.2.5.b-elevated-privs-session
+-a always,exit -F arch=b64 -S setresuid -F a0=0 -F exe=/usr/bin/sudo -F key=10.2.5.b-elevated-privs-session
+-a always,exit -F arch=b32 -S setresuid -F a0=0 -F exe=/usr/bin/sudo -F key=10.2.5.b-elevated-privs-session
+-a always,exit -F arch=b64 -S execve -C uid!=euid -F euid=0 -F key=10.2.5.b-elevated-privs-setuid
+-a always,exit -F arch=b32 -S execve -C uid!=euid -F euid=0 -F key=10.2.5.b-elevated-privs-setuid
+
+-a always,exit -F path=/etc/group -F perm=wa -F key=10.2.5.c-accounts
+-a always,exit -F path=/etc/passwd -F perm=wa -F key=10.2.5.c-accounts
+-a always,exit -F path=/etc/gshadow -F perm=wa -F key=10.2.5.c-accounts
+-a always,exit -F path=/etc/shadow -F perm=wa -F key=10.2.5.c-accounts
+-a always,exit -F path=/etc/security/opasswd -F perm=wa -F key=10.2.5.c-accounts
+
+-a exit,always -F arch=b64 -S kill -k Kill_Process
+
+-a exit,always -F arch=b64 -S execve -F path=/sbin/reboot -k Reboot
+-a exit,always -F arch=b64 -S execve -F path=/sbin/init -k Reboot
+-a exit,always -F arch=b64 -S execve -F path=/sbin/poweroff -k Reboot
+-a exit,always -F arch=b64 -S execve -F path=/sbin/shutdown -k Reboot
+
+-a always,exit -F arch=b32 -S chmod,lchown,fchmod,fchown,chown,setxattr,lsetxattr,fsetxattr,removexattr,lremovexattr,fremovexattr,fchownat,fchmodat -F key=perm_mod
+-a always,exit -F arch=b64 -S chmod,fchmod,chown,fchown,lchown,setxattr,lsetxattr,fsetxattr,removexattr,lremovexattr,fremovexattr,fchownat,fchmodat -F key=perm_mod
+
+-w /usr/sbin/usermod -p x -F key=user_mod

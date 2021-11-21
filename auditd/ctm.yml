@@ -1,0 +1,21 @@
+---
+- name: Configurar reglas y envio de logs del servicio Auditd
+  hosts: all
+  become: True
+  vars:
+    - audispd_remote_config:
+        - parametro: remote_server
+          valor: 127.0.0.1
+        - parametro: port
+          valor: 514
+        - parametro: transport
+          valor: udp
+  tasks:
+    - block:
+        - name: Instalar plugin de auditd
+          yum:
+            name: audispd-plugins
+            state: present
+  handlers:
+    - name: Reiniciar auditd
+      command: service auditd restart
